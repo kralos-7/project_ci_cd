@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+{% block content %}
+{% include "auth/form_login.html" %}
+<div class="container mx-auto grid grid-cols-1 md:grid-cols-2  h-screen w-screen pt-16">
+    <!-- Div visible solo en pantallas medianas y superiores -->
+    <div class="container mx-auto hidden md:flex items-center justify-center">
+        <div class="m-10">
+            <img src="{{ url_for('static', filename='images/login.svg') }}" alt="Imagen" class="max-h-full max-w-full">
+        </div>
+    </div>
+    
+    <!-- Div siempre visible -->
+    <div class="container mx-auto">
+        <div class="m-5">
+            <div class="mb-4 border-b border-gray-200 dark:border-gray-700">
+                <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab" data-tabs-toggle="#default-tab-content" role="tablist">
+                    <li class="me-2" role="presentation">
+                        <button class="inline-block p-4 border-b-2 rounded-t-lg" id="profile-tab" data-tabs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false" >Iniciar sesión</button>
+                    </li>
+                    <li class="me-2" role="presentation">
+                        <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="dashboard-tab" data-tabs-target="#dashboard" type="button" role="tab" aria-controls="dashboard" aria-selected="false" >Registrarse</button>
+                    </li>
+                    
+                </ul>
+            </div>
+            <div id="default-tab-content">
+                <div class="tab-content p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                    <div id="messages" class="mb-1">
+                        {% if mensajeIniciarSesion %}
+                        <div class="flex items-center text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 p-3" role="alert">
+                            <img src="static/images/icon-error.svg" class="m-1 text-red-500">
+                            <span class="sr-only">Info</span>
+                            <div>
+                              <span class="font-medium">{{mensajeIniciarSesion}}</span> 
+                            </div>
+                          </div>
+                        {% endif %}
+                    </div>
+                    {% include "auth/login.html" %}
+                </div>
+                <div class="tab-content p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+                    <div id="messages" class="mb-1">
+                        {% if mensajeRegistrarse %}
+                        <div class="flex items-center text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 p-3" role="alert">
+                            <img src="static/images/icon-error.svg">
+                            <span class="sr-only">Info</span>
+                            <div>
+                              <span class="font-medium">{{mensajeRegistrarse}}</span> 
+                            </div>
+                          </div>
+                        {% endif %}
+                    </div>
+                    {% include "auth/register.html" %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
