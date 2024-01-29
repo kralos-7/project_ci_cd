@@ -1,6 +1,12 @@
 from . import autenticacion
+from modules.auth.models.User import User
+from database.db import db
 from flask import request, jsonify, session, render_template, redirect
+from datetime import datetime, timedelta
 # from common import require_login, esta_logueado
+
+NUM_MAX_INTENTOS = 3
+DURACION_BLOQUEO = timedelta(minutes=1)
 
 @autenticacion.route("/")
 def index():
@@ -8,20 +14,80 @@ def index():
 
 
 
-@autenticacion.route("/login", methods=["POST"])
+@autenticacion.route('/login',methods=['GET','POST'])
 def login():
-    #validaciones a la bd
-    data = request.get_json()
-    user = data.get('campoUsuario')
-    password = data.get('campoPassword')
-    if password == "123":
-        session['email'] = "correo@dominio.com"
-        session['username'] = "Luiz Ruiz"
-        # session["login"] = "usuario1"
-        return jsonify({"ok":True,"mensaje": "Usuario y/o contraseña válidos. Por favor vuelva a intentarlo"}),200
+    mensaje = None
+    now = datetime.utcnow()
 
-    else:
-        return jsonify({"ok":False,"mensaje": "Usuario y/o contraseña inválidos. Por favor vuelva a intentarlo"}),401
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        user = db.session.query(User).filter_by(email=email).first()
+        
+        if user:
+            if user.locked_until and now <= user.locked_until:
+                
+                mensaje = "Interfaz bloqueada. Inténtelo nuevamente después de 1 minuto."
+            else:
+                if user.login_attempts is None:
+                    user.login_attempts = 0
+
+                if user.check_password(password):
+                    # Restablecer el contador de intentos si el inicio de sesión es exitoso
+                    user.login_attempts = 0
+                    db.session.commit()
+
+                    session['email'] = user.email
+                    session['username'] = user.get_username()
+                    return redirect('/')
+                else:
+                    # Incrementar el contador de intentos
+                    user.login_attempts += 1
+
+                    if user.login_attempts >= NUM_MAX_INTENTOS:
+                        # Bloquear la interfaz por 1 minuto
+                        user.locked_until = now + DURACION_BLOQUEO
+                        # Reiniciar los intentos después del bloqueo
+                        user.login_attempts = 0
+
+                    db.session.commit()
+                    # print(f"Usuario después del commit: {user}")
+
+                    if user.login_attempts >= NUM_MAX_INTENTOS:
+                        mensaje = "Interfaz bloqueada."
+                    else:
+                        # intentos_disponibles = NUM_MAX_INTENTOS - user.login_attempts 
+                        mensaje = "Usuario y/o contraseña incorrectos."
+        else:
+            mensaje = "El usuario no existe"
+
+    return render_template('auth/index.html', mensajeIniciarSesion = mensaje)
+
+@autenticacion.route('/register',methods=['GET','POST'])
+def register():
+    mensajeRegistrarse = None
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['passwordRegister']
+
+        new_user = db.session.query(User).filter_by(email=email).first()
+        print(new_user)
+
+        if new_user is None:
+            new_user = User(username=username, email=email, password=password)
+            db.session.add(new_user)
+            db.session.commit()
+            return redirect('/')
+        else:
+            # El usuario ya existe, manejar según tus necesidades
+            # return render_template("user_exists.html")
+            print("entro al else")
+            mensajeRegistrarse = "Usted no puede registrarse con este correo electrónico"
+
+    # return render_template("register_form.html")
+    return render_template("auth/index.html", mensajeRegistrarse = mensajeRegistrarse)
 
 
 

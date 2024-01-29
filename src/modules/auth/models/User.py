@@ -1,23 +1,32 @@
-from database.db import db
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from hashlib import md5 
+from sqlalchemy.sql import func
 
-class User(db.Model):
-    __tablename__ = 'tbl_usuarios'
-    fk_carrera = db.Column(db.Integer, primary_key=True)
-    correo = db.Column(db.String(30))
-    contrasenia = db.Column(db.String(20))
+Base = declarative_base()
 
-    def getUser(self, id):
-        user = db.get_or_404(self, id)
-        print("--------------------")
-        print(user.correo)
-        print("--------------------")
+class User(Base):
+    __tablename__ = 'users'
 
-        return 0
+    email = Column(String(50), primary_key=True, nullable=False)
+    username = Column(String(50), nullable=False)
+    _password = Column('password', String(200), nullable=False)
+    login_attempts = Column(Integer, default=0)
+    locked_until = Column(DateTime, default=None)
+    created_at = Column(DateTime, default=func.now())
+
+    # Setter y Getter para encriptar y desencriptar la contraseña usando MD5
+    @property
+    def password(self):
+        return self._password
+
+    @password.setter
+    def password(self, plaintext_password):
+        self._password = md5(plaintext_password.encode('utf-8')).hexdigest()
     
-
-    def insert_user(self):
-        print("--------------")
-        
-        db.session.add(self)
-        db.session.commit()
-        return 0
+    def check_password(self, password):
+        hashed_password = md5(password.encode()).hexdigest()
+        return hashed_password == self._password
+    
+    def get_username(self):
+        return self.username
