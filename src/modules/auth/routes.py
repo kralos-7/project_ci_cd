@@ -13,7 +13,6 @@ def index():
     return render_template("auth/index.html")
 
 
-
 @autenticacion.route('/login',methods=['GET','POST'])
 def login():
     mensaje = None
@@ -22,9 +21,7 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-
         user = db.session.query(User).filter_by(email=email).first()
-        
         if user:
             if user.locked_until and now <= user.locked_until:
                 
@@ -90,10 +87,6 @@ def register():
     return render_template("auth/index.html", mensajeRegistrarse = mensajeRegistrarse)
 
 
-
-@autenticacion.route("/sign-up")
-def sign_up():
-    return "sign-up"
 
 @autenticacion.route('/logout')
 def logout():
