@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from hashlib import md5 
 from sqlalchemy.sql import func
+from database.db import db
 
 Base = declarative_base()
 
@@ -30,3 +31,19 @@ class User(Base):
     
     def get_username(self):
         return self.username
+    
+
+class UserService:
+
+    def create_user(username, email, password):
+        # db.session = self.Session()
+        user = User(username=username,email=email, password=password)
+        db.session.add(user)
+        db.session.commit()
+
+    def authenticate_user(email):
+        # session = self.Session()
+        # user = db.session.query(User).filter_by(username=username, password=password).first()
+        user = db.session.query(User).filter_by(email=email).first()
+        print(user)
+        return user 

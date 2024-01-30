@@ -1,5 +1,5 @@
 from . import autenticacion
-from modules.auth.models.User import User
+from modules.auth.models.User import User, UserService
 from database.db import db
 from flask import request, jsonify, session, render_template, redirect
 from datetime import datetime, timedelta
@@ -21,7 +21,8 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        user = db.session.query(User).filter_by(email=email).first()
+        # user = db.session.query(User).filter_by(email=email).first()
+        user = UserService.authenticate_user(email)
         if user:
             if user.locked_until and now <= user.locked_until:
                 
@@ -69,13 +70,12 @@ def register():
         email = request.form['email']
         password = request.form['passwordRegister']
 
+        # validar = registrarse(username, email, password)
         new_user = db.session.query(User).filter_by(email=email).first()
         print(new_user)
 
         if new_user is None:
-            new_user = User(username=username, email=email, password=password)
-            db.session.add(new_user)
-            db.session.commit()
+            UserService.create_user(username,email,password)
             return redirect('/')
         else:
             # El usuario ya existe, manejar según tus necesidades
